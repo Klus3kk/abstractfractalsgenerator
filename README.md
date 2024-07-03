@@ -7,3 +7,6 @@ The user can generate:
 * Multibrot Set,
 * Mandelbrot Set,
 * ...and many more in the future c:
+
+
+**In progress**
