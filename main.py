@@ -6,17 +6,15 @@ from PIL import Image, ImageTk
 import io
 
 # Center the window on the screen
-def center_window(window):
+def center_window(window, width=1000, height=800):
     window.update_idletasks()
-    width = window.winfo_width()
-    height = window.winfo_height()
     x = (window.winfo_screenwidth() // 2) - (width // 2)
     y = (window.winfo_screenheight() // 2) - (height // 2)
     window.geometry(f'{width}x{height}+{x}+{y}')
 
 # Function to draw different types of fractals
-def draw_fractal(fractal_type, order=0, zoom_factor=1.0):
-    def mandelbrot(ax, xlim, ylim, max_iter, cmap):
+def draw_fractal(fractal_type, order=0, zoom_factor=1.0, max_iter=256, cmap='nipy_spectral'):
+    def mandelbrot(ax, xlim, ylim):
         x = np.linspace(xlim[0], xlim[1], 800)
         y = np.linspace(ylim[0], ylim[1], 800)
         X, Y = np.meshgrid(x, y)
@@ -29,7 +27,7 @@ def draw_fractal(fractal_type, order=0, zoom_factor=1.0):
             img[mask & (np.abs(Z) >= 10)] = n
         ax.imshow(img, extent=(xlim[0], xlim[1], ylim[0], ylim[1]), cmap=cmap)
 
-    def multibrot(ax, xlim, ylim, max_iter, power, cmap):
+    def multibrot(ax, xlim, ylim):
         x = np.linspace(xlim[0], xlim[1], 800)
         y = np.linspace(ylim[0], ylim[1], 800)
         X, Y = np.meshgrid(x, y)
@@ -38,11 +36,11 @@ def draw_fractal(fractal_type, order=0, zoom_factor=1.0):
         img = np.zeros(C.shape, dtype=int)
         for n in range(max_iter):
             mask = np.abs(Z) < 10
-            Z[mask] = Z[mask] ** power + C[mask]
+            Z[mask] = Z[mask] ** order + C[mask]
             img[mask & (np.abs(Z) >= 10)] = n
         ax.imshow(img, extent=(xlim[0], xlim[1], ylim[0], ylim[1]), cmap=cmap)
 
-    def nova(ax, xlim, ylim, c, max_iter, cmap):
+    def nova(ax, xlim, ylim):
         x = np.linspace(xlim[0], xlim[1], 800)
         y = np.linspace(ylim[0], ylim[1], 800)
         X, Y = np.meshgrid(x, y)
@@ -52,37 +50,35 @@ def draw_fractal(fractal_type, order=0, zoom_factor=1.0):
             Z[abs(Z) > 2] = 0
         ax.imshow(np.angle(Z), extent=(xlim[0], xlim[1], ylim[0], ylim[1]), cmap=cmap)
 
-    def phoenix(ax, xlim, ylim, c, max_iter, cmap):
+    def phoenix(ax, xlim, ylim):
         x = np.linspace(xlim[0], xlim[1], 800)
         y = np.linspace(ylim[0], ylim[1], 800)
         X, Y = np.meshgrid(x, y)
         Z = X + 1j * Y
         P = np.zeros_like(Z)
         for n in range(max_iter):
-            Z, P = Z**2 + c + P * 0.5, Z
+            Z, P = Z**2 + 0.56667 - 0.5j + P * 0.5, Z
         ax.imshow(np.angle(Z), extent=(xlim[0], xlim[1], ylim[0], ylim[1]), cmap=cmap)
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(8, 8))
     ax.set_aspect('equal')
     ax.axis('off')
 
     xlim = [-2.0 / zoom_factor, 2.0 / zoom_factor]
     ylim = [-2.0 / zoom_factor, 2.0 / zoom_factor]
 
-    cmap = 'nipy_spectral'
-
     if fractal_type == "Mandelbrot":
-        mandelbrot(ax, xlim=xlim, ylim=ylim, max_iter=256, cmap=cmap)
+        mandelbrot(ax, xlim=xlim, ylim=ylim)
     elif fractal_type == "Multibrot":
-        multibrot(ax, xlim=xlim, ylim=ylim, max_iter=256, power=order, cmap=cmap)
+        multibrot(ax, xlim=xlim, ylim=ylim)
     elif fractal_type == "Nova":
-        nova(ax, xlim=xlim, ylim=ylim, c=0.5, max_iter=256, cmap=cmap)
+        nova(ax, xlim=xlim, ylim=ylim)
     elif fractal_type == "Phoenix":
-        phoenix(ax, xlim=xlim, ylim=ylim, c=0.56667 - 0.5j, max_iter=256, cmap=cmap)
+        phoenix(ax, xlim=xlim, ylim=ylim)
 
     # Save the fractal as a PNG image in memory
     buf = io.BytesIO()
-    plt.savefig(buf, format='png')
+    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
     buf.seek(0)
     plt.close(fig)
     
@@ -95,13 +91,12 @@ def update_fractal(zoom_factor=1.0):
     try:
         buf = draw_fractal(fractal_type, order, zoom_factor)
         img = Image.open(buf)
-        img.thumbnail((400, 400))
         img = ImageTk.PhotoImage(img)
         panel.config(image=img)
         panel.image = img
     except Exception as e:
         messagebox.showerror("Error", str(e))
-    root.after(1000, lambda: update_fractal(zoom_factor * 1.1))  # Continuously update with zoom
+    root.after(17, lambda: update_fractal(zoom_factor * 1.01))  # Continuously update with zoom (17 ms for ~60fps)
 
 # Function to save the fractal as an image
 def save_image():
@@ -125,15 +120,15 @@ def save_gif():
     try:
         frames = []
         zoom_factor = 1.0
-        for _ in range(max_order + 1):
+        for _ in range(60 * duration):  # 60 frames per second * duration
             buf = draw_fractal(fractal_type, max_order, zoom_factor)
             img = Image.open(buf)
             frames.append(img)
-            zoom_factor *= 1.1
+            zoom_factor *= 1.01
         
         filename = simpledialog.askstring("Save As", "Enter the file name to save (e.g., fractal.gif):")
         if filename:
-            frames[0].save(filename, save_all=True, append_images=frames[1:], duration=duration*1000, loop=0)
+            frames[0].save(filename, save_all=True, append_images=frames[1:], duration=17, loop=0)
             messagebox.showinfo("Saved", f"Fractal GIF saved as {filename}")
     except Exception as e:
         messagebox.showerror("Error", str(e))
@@ -147,7 +142,7 @@ main_frame = tk.Frame(root)
 main_frame.pack(fill=tk.BOTH, expand=True)
 
 # Create canvas for fractal display
-canvas = tk.Canvas(main_frame, width=500, height=500)
+canvas = tk.Canvas(main_frame, width=800, height=800, bg='black')
 canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
 # Create frame for controls
@@ -183,12 +178,12 @@ save_gif_button = ttk.Button(control_frame, text="Save Fractal as GIF", command=
 save_gif_button.pack()
 
 # Create panel for displaying the fractal image
-panel = ttk.Label(canvas)
+panel = ttk.Label(canvas, background='black')
 panel.pack()
 
 # Center the window on the screen
 root.update()
-center_window(root)
+center_window(root, width=1200, height=800)
 
 # Start continuous update of the fractal with zoom effect
 update_fractal()
