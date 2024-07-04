@@ -2,7 +2,7 @@
 This repository includes fractals generator which can be saved as the picture or GIF.
 
 The user can generate:
-* Nova,
+* Nova Fractals,
 * Phoenix Fractals,
 * Multibrot Set,
 * Mandelbrot Set,
