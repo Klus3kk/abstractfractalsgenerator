@@ -41,7 +41,7 @@ class FractalApp:
         ttk.Label(control_frame, text="Fractal Type").pack(pady=5)
         self.fractal_types = [
             "Mandelbrot", "Julia", "Burning Ship", "Tricorn", "Newton",
-            "Multibrot", "Phoenix", "Nova", "Mandelbar", "Perpendicular Mandelbrot",
+            "Multibrot", "Mandelbar", "Perpendicular Mandelbrot",
             "Perpendicular Burning Ship", "Perpendicular Buffalo", "Celtic Mandelbrot",
             "Celtic Mandelbar", "Custom"
         ]
@@ -101,7 +101,7 @@ class FractalApp:
         self.ymax.set(1.5)
         self.width.set(800)
         self.height.set(600)
-        self.colormap.set("hot")
+        # Do not reset colormap
         self.custom_eq.set("z*z + c")
         self.custom_c_real.set(-0.7)
         self.custom_c_imag.set(0.27015)
@@ -162,24 +162,6 @@ class FractalApp:
             if abs(z) > 2:
                 return n
             z = z**power + c
-        return max_iter
-
-    def phoenix(self, z, c, max_iter, p=0.56667):
-        q = complex(-0.4, 0.6)
-        for n in range(max_iter):
-            if abs(z) > 2:
-                return n
-            z = z*z + p*z + q
-        return max_iter
-
-    def nova(self, z, c, max_iter, d=3):
-        for n in range(max_iter):
-            if abs(z) > 2:
-                return n
-            try:
-                z = z - d * (z**3 - 1) / (3 * z**2)
-            except ZeroDivisionError:
-                return max_iter
         return max_iter
 
     def mandelbar(self, c, max_iter):
@@ -270,14 +252,6 @@ class FractalApp:
             for i in range(width):
                 for j in range(height):
                     n3[i, j] = self.multibrot(r1[i] + 1j*r2[j], max_iter)
-        elif fractal_type == "Phoenix":
-            for i in range(width):
-                for j in range(height):
-                    n3[i, j] = self.phoenix(r1[i] + 1j*r2[j], max_iter)
-        elif fractal_type == "Nova":
-            for i in range(width):
-                for j in range(height):
-                    n3[i, j] = self.nova(r1[i] + 1j*r2[j], max_iter)
         elif fractal_type == "Mandelbar":
             for i in range(width):
                 for j in range(height):
@@ -308,7 +282,8 @@ class FractalApp:
             custom_eq = self.custom_eq.get()
             for i in range(width):
                 for j in range(height):
-                    n3[i, j] = self.custom_fractal(z_initial, c, max_iter, custom_eq)
+                    z = z_initial
+                    n3[i, j] = self.custom_fractal(z, c, max_iter, custom_eq)
         return n3
 
     def update_plot(self):
