@@ -42,10 +42,10 @@ class FractalApp:
             "Mandelbrot", "Julia", "Burning Ship", "Tricorn", "Newton",
             "Multibrot", "Mandelbar", "Perpendicular Mandelbrot",
             "Perpendicular Burning Ship", "Perpendicular Buffalo",
-            "Celtic Mandelbrot", "Celtic Mandelbar", "Custom"
+            "Celtic Mandelbrot", "Celtic Mandelbar"
         ])
         fractal_combobox.pack(pady=5)
-        fractal_combobox.bind("<<ComboboxSelected>>", self.update_custom_parameters)
+        fractal_combobox.bind("<<ComboboxSelected>>")
 
         ttk.Label(control_frame, text="Max Iterations").pack(pady=5)
         ttk.Entry(control_frame, textvariable=self.max_iter).pack(pady=5)
@@ -73,35 +73,6 @@ class FractalApp:
 
         ttk.Button(control_frame, text="Generate", command=self.update_plot).pack(pady=10)
         ttk.Button(control_frame, text="Save", command=self.save_plot).pack(pady=5)
-
-        # Custom fractal parameters
-        self.custom_frame = ttk.LabelFrame(control_frame, text="Custom Fractal Parameters")
-        self.custom_frame.pack(fill="x", pady=10)
-
-        ttk.Label(self.custom_frame, text="Equation (z, c)").grid(row=0, column=0, pady=5, sticky=tk.W)
-        ttk.Entry(self.custom_frame, textvariable=self.custom_eq).grid(row=0, column=1, pady=5)
-
-        ttk.Label(self.custom_frame, text="Constant c (Real)").grid(row=1, column=0, pady=5, sticky=tk.W)
-        ttk.Entry(self.custom_frame, textvariable=self.custom_c_real).grid(row=1, column=1, pady=5)
-
-        ttk.Label(self.custom_frame, text="Constant c (Imag)").grid(row=2, column=0, pady=5, sticky=tk.W)
-        ttk.Entry(self.custom_frame, textvariable=self.custom_c_imag).grid(row=2, column=1, pady=5)
-
-        ttk.Label(self.custom_frame, text="Initial z (Real)").grid(row=3, column=0, pady=5, sticky=tk.W)
-        ttk.Entry(self.custom_frame, textvariable=self.custom_z_real).grid(row=3, column=1, pady=5)
-
-        ttk.Label(self.custom_frame, text="Initial z (Imag)").grid(row=4, column=0, pady=5, sticky=tk.W)
-        ttk.Entry(self.custom_frame, textvariable=self.custom_z_imag).grid(row=4, column=1, pady=5)
-
-        # Initially hide custom parameters
-        self.custom_frame.pack_forget()
-
-    def update_custom_parameters(self, event=None):
-        selected_fractal = self.fractal_type.get()
-        if selected_fractal == "Custom":
-            self.custom_frame.pack(fill="x", pady=10)
-        else:
-            self.custom_frame.pack_forget()
 
     def create_plot(self):
         self.fig, self.ax = plt.subplots(figsize=(8, 6))
@@ -217,19 +188,6 @@ class FractalApp:
             z = np.conj(complex(abs(z.real), z.imag)) + c
         return max_iter
 
-    def custom_fractal(self, z, c, max_iter, custom_eq):
-        try:
-            for n in range(max_iter):
-                if abs(z) > 2:
-                    return n
-                z = eval(custom_eq)
-        except Exception as e:
-            print(f"Error in custom fractal equation: {e}")
-            return 0
-        return max_iter
-
-
-
     def generate_fractal(self, xmin, xmax, ymin, ymax, width, height, max_iter, fractal_type):
         r1 = np.linspace(xmin, xmax, width)
         r2 = np.linspace(ymin, ymax, height)
@@ -283,13 +241,7 @@ class FractalApp:
             for i in range(width):
                 for j in range(height):
                     n3[i, j] = self.celtic_mandelbar(r1[i] + 1j*r2[j], max_iter)
-        elif fractal_type == "Custom":
-            c = complex(self.custom_c_real.get(), self.custom_c_imag.get())
-            z_init = complex(self.custom_z_real.get(), self.custom_z_imag.get())
-            custom_eq = self.custom_eq.get()
-            for i in range(width):
-                for j in range(height):
-                    n3[i, j] = self.custom_fractal(z_init, c, max_iter, custom_eq)
+                    
         return n3
 
     def update_plot(self):
