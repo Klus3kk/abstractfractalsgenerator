@@ -14,6 +14,7 @@ class FractalApp:
         style = ttk.Style(theme="darkly")
 
         self.fractal_type = tk.StringVar(value="Mandelbrot")
+        self.fractal_type.trace('w', self.reset_parameters)
         self.max_iter = tk.IntVar(value=256)
         self.xmin = tk.DoubleVar(value=-2.0)
         self.xmax = tk.DoubleVar(value=1.0)
@@ -91,6 +92,21 @@ class FractalApp:
 
         ttk.Label(custom_frame, text="Initial z (Imag)").pack(pady=5)
         ttk.Entry(custom_frame, textvariable=self.custom_z_imag).pack(pady=5)
+
+    def reset_parameters(self, *args):
+        self.max_iter.set(256)
+        self.xmin.set(-2.0)
+        self.xmax.set(1.0)
+        self.ymin.set(-1.5)
+        self.ymax.set(1.5)
+        self.width.set(800)
+        self.height.set(600)
+        self.colormap.set("hot")
+        self.custom_eq.set("z*z + c")
+        self.custom_c_real.set(-0.7)
+        self.custom_c_imag.set(0.27015)
+        self.custom_z_real.set(0.0)
+        self.custom_z_imag.set(0.0)
 
     def create_plot(self):
         self.fig, self.ax = plt.subplots(figsize=(8, 6))
@@ -195,8 +211,7 @@ class FractalApp:
         for n in range(max_iter):
             if abs(z) > 2:
                 return n
-            z = complex(abs(z.real), -abs(z.imag))**2 + c
-            z = complex(z.real, -z.imag)
+            z = complex(abs(z.real), abs(z.imag))**2 + c
         return max_iter
 
     def celtic_mandelbrot(self, c, max_iter):
@@ -204,7 +219,7 @@ class FractalApp:
         for n in range(max_iter):
             if abs(z) > 2:
                 return n
-            z = complex(abs(z.real), abs(z.imag))**2 + c
+            z = complex(abs(z.real), z.imag)**2 + c
         return max_iter
 
     def celtic_mandelbar(self, c, max_iter):
