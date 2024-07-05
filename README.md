@@ -22,7 +22,7 @@ This repository includes a versatile fractal generator that allows you to create
 ## Instalation
 * Clone the repository: 
 ```
-git clone 
+git clone https://github.com/Klus3kk/Abstract-Fractals-Generator.git
 ```
 
 * Install dependencies: 
