@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, simpledialog, messagebox
 import numpy as np
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageDraw
 import io
 import matplotlib.pyplot as plt
 import threading
@@ -14,7 +14,7 @@ def center_window(window, width=1000, height=800):
     window.geometry(f'{width}x{height}+{x}+{y}')
 
 # Function to draw different types of fractals
-def draw_fractal(fractal_type, order=0, zoom_factor=1.0, max_iter=256, cmap='nipy_spectral'):
+def draw_fractal(fractal_type, order=0, zoom_factor=1.0, max_iter=256, cmap='nipy_spectral', center=(0, 0)):
     def mandelbrot(ax, xlim, ylim):
         x = np.linspace(xlim[0], xlim[1], 800)
         y = np.linspace(ylim[0], ylim[1], 800)
@@ -43,7 +43,7 @@ def draw_fractal(fractal_type, order=0, zoom_factor=1.0, max_iter=256, cmap='nip
 
     def nova(ax, xlim, ylim):
         x = np.linspace(xlim[0], xlim[1], 800)
-        y = np.linspace(ylim[0], ylim[1], 800)
+        y = np.linspace(ylim[0], xlim[1], 800)
         X, Y = np.meshgrid(x, y)
         Z = X + 1j * Y
         for n in range(max_iter):
@@ -53,7 +53,7 @@ def draw_fractal(fractal_type, order=0, zoom_factor=1.0, max_iter=256, cmap='nip
 
     def phoenix(ax, xlim, ylim):
         x = np.linspace(xlim[0], xlim[1], 800)
-        y = np.linspace(ylim[0], xlim[1], 800)
+        y = np.linspace(xlim[0], xlim[1], 800)
         X, Y = np.meshgrid(x, y)
         Z = X + 1j * Y
         P = np.zeros_like(Z)
@@ -65,8 +65,8 @@ def draw_fractal(fractal_type, order=0, zoom_factor=1.0, max_iter=256, cmap='nip
     ax.set_aspect('equal')
     ax.axis('off')
 
-    xlim = [-2.0 / zoom_factor, 2.0 / zoom_factor]
-    ylim = [-2.0 / zoom_factor, 2.0 / zoom_factor]
+    xlim = [center[0] - 2.0 / zoom_factor, center[0] + 2.0 / zoom_factor]
+    ylim = [center[1] - 2.0 / zoom_factor, center[1] + 2.0 / zoom_factor]
 
     if fractal_type == "Mandelbrot":
         mandelbrot(ax, xlim=xlim, ylim=ylim)
@@ -86,11 +86,11 @@ def draw_fractal(fractal_type, order=0, zoom_factor=1.0, max_iter=256, cmap='nip
     return buf
 
 # Function to generate frames for the video
-def generate_frames(fractal_type, order, duration, zoom_speed=1.01):
+def generate_frames(fractal_type, order, duration, zoom_speed=1.01, max_iter=256, center=(0, 0), cmap='nipy_spectral'):
     frames = []
     zoom_factor = 1.0
     for _ in range(60 * duration):  # 60 frames per second * duration
-        buf = draw_fractal(fractal_type, order, zoom_factor)
+        buf = draw_fractal(fractal_type, order, zoom_factor, max_iter, cmap, center)
         img = Image.open(buf)
         frames.append(img)
         zoom_factor *= zoom_speed
@@ -113,9 +113,13 @@ def start_fractal_video():
     fractal_type = fractal_type_var.get()
     order = order_var.get()
     duration = duration_var.get()
+    max_iter = max_iter_var.get()
+    center_x = float(center_x_var.get())
+    center_y = float(center_y_var.get())
+    cmap = cmap_var.get()
     try:
         # Run frame generation in a separate thread to avoid freezing the UI
-        thread = threading.Thread(target=lambda: play_frames(generate_frames(fractal_type, order, duration), panel))
+        thread = threading.Thread(target=lambda: play_frames(generate_frames(fractal_type, order, duration, max_iter=max_iter, center=(center_x, center_y), cmap=cmap), panel))
         thread.start()
     except Exception as e:
         messagebox.showerror("Error", str(e))
@@ -124,8 +128,12 @@ def start_fractal_video():
 def save_image():
     fractal_type = fractal_type_var.get()
     order = order_var.get()
+    max_iter = max_iter_var.get()
+    center_x = float(center_x_var.get())
+    center_y = float(center_y_var.get())
+    cmap = cmap_var.get()
     try:
-        buf = draw_fractal(fractal_type, order)
+        buf = draw_fractal(fractal_type, order, max_iter=max_iter, center=(center_x, center_y), cmap=cmap)
         img = Image.open(buf)
         filename = simpledialog.askstring("Save As", "Enter the file name to save (e.g., fractal.png):")
         if filename:
@@ -137,10 +145,14 @@ def save_image():
 # Function to save the fractal as a GIF
 def save_gif():
     fractal_type = fractal_type_var.get()
-    max_order = order_var.get()
+    order = order_var.get()
     duration = duration_var.get()
+    max_iter = max_iter_var.get()
+    center_x = float(center_x_var.get())
+    center_y = float(center_y_var.get())
+    cmap = cmap_var.get()
     try:
-        frames = generate_frames(fractal_type, max_order, duration)
+        frames = generate_frames(fractal_type, order, duration, max_iter=max_iter, center=(center_x, center_y), cmap=cmap)
         filename = simpledialog.askstring("Save As", "Enter the file name to save (e.g., fractal.gif):")
         if filename:
             frames[0].save(filename, save_all=True, append_images=frames[1:], duration=17, loop=0)
@@ -167,29 +179,45 @@ control_frame.pack(side=tk.RIGHT, fill=tk.Y)
 # Fractal type selection
 fractal_type_var = tk.StringVar(value="Mandelbrot")
 ttk.Label(control_frame, text="Fractal Type:").pack()
-fractal_type_menu = ttk.Combobox(control_frame, textvariable=fractal_type_var, values=["Mandelbrot", "Multibrot", "Nova", "Phoenix"])
-fractal_type_menu.pack()
+ttk.Combobox(control_frame, textvariable=fractal_type_var, values=["Mandelbrot", "Multibrot", "Nova", "Phoenix"]).pack()
 
-# Order selection
-order_var = tk.IntVar(value=0)
+# Order for Multibrot
+order_var = tk.IntVar(value=2)
 ttk.Label(control_frame, text="Order (for Multibrot):").pack()
-order_scale = ttk.Scale(control_frame, from_=0, to=10, variable=order_var, orient=tk.HORIZONTAL)
-order_scale.pack()
+ttk.Scale(control_frame, from_=2, to=10, variable=order_var, orient=tk.HORIZONTAL).pack()
 
-# GIF duration selection
-duration_var = tk.IntVar(value=1)
+# GIF duration
+duration_var = tk.IntVar(value=5)
 ttk.Label(control_frame, text="GIF Duration (seconds):").pack()
-duration_scale = ttk.Scale(control_frame, from_=1, to=10, variable=duration_var, orient=tk.HORIZONTAL)
-duration_scale.pack()
+ttk.Scale(control_frame, from_=1, to=10, variable=duration_var, orient=tk.HORIZONTAL).pack()
+
+# Max iterations
+max_iter_var = tk.IntVar(value=256)
+ttk.Label(control_frame, text="Max Iterations:").pack()
+ttk.Entry(control_frame, textvariable=max_iter_var).pack()
+
+# Center coordinates
+ttk.Label(control_frame, text="Center X:").pack()
+center_x_var = tk.StringVar(value="0")
+ttk.Entry(control_frame, textvariable=center_x_var).pack()
+
+ttk.Label(control_frame, text="Center Y:").pack()
+center_y_var = tk.StringVar(value="0")
+ttk.Entry(control_frame, textvariable=center_y_var).pack()
+
+# Color map
+cmap_var = tk.StringVar(value="nipy_spectral")
+ttk.Label(control_frame, text="Color Map:").pack()
+ttk.Combobox(control_frame, textvariable=cmap_var, values=plt.colormaps()).pack()
 
 # Buttons
-draw_button = ttk.Button(control_frame, text="Draw Fractal", command=start_fractal_video)
+draw_button = tk.Button(control_frame, text="Draw Fractal", command=start_fractal_video)
 draw_button.pack()
 
-save_button = ttk.Button(control_frame, text="Save Fractal", command=save_image)
-save_button.pack()
+save_image_button = tk.Button(control_frame, text="Save Fractal", command=save_image)
+save_image_button.pack()
 
-save_gif_button = ttk.Button(control_frame, text="Save Fractal as GIF", command=save_gif)
+save_gif_button = tk.Button(control_frame, text="Save Fractal as GIF", command=save_gif)
 save_gif_button.pack()
 
 # Panel to display fractal

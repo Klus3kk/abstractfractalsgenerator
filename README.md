@@ -8,5 +8,11 @@ The user can generate:
 * Mandelbrot Set,
 * ...and many more in the future c:
 
+## Instalation
+You need to install numpy, pillow  and matplotlib for it to work:
+```
+pip install numpy pillow matplotlib
+
+```
 
 **In progress**
