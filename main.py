@@ -1,9 +1,10 @@
 import tkinter as tk
 from tkinter import ttk, simpledialog, messagebox
-import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image, ImageTk
 import io
+import matplotlib.pyplot as plt
+import threading
 
 # Center the window on the screen
 def center_window(window, width=1000, height=800):
@@ -52,7 +53,7 @@ def draw_fractal(fractal_type, order=0, zoom_factor=1.0, max_iter=256, cmap='nip
 
     def phoenix(ax, xlim, ylim):
         x = np.linspace(xlim[0], xlim[1], 800)
-        y = np.linspace(ylim[0], ylim[1], 800)
+        y = np.linspace(ylim[0], xlim[1], 800)
         X, Y = np.meshgrid(x, y)
         Z = X + 1j * Y
         P = np.zeros_like(Z)
@@ -81,22 +82,43 @@ def draw_fractal(fractal_type, order=0, zoom_factor=1.0, max_iter=256, cmap='nip
     plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
     buf.seek(0)
     plt.close(fig)
-    
+
     return buf
 
-# Function to update the fractal based on parameters
-def update_fractal(zoom_factor=1.0):
-    fractal_type = fractal_type_var.get()
-    order = order_var.get()
-    try:
+# Function to generate frames for the video
+def generate_frames(fractal_type, order, duration, zoom_speed=1.01):
+    frames = []
+    zoom_factor = 1.0
+    for _ in range(60 * duration):  # 60 frames per second * duration
         buf = draw_fractal(fractal_type, order, zoom_factor)
         img = Image.open(buf)
-        img = ImageTk.PhotoImage(img)
-        panel.config(image=img)
-        panel.image = img
+        frames.append(img)
+        zoom_factor *= zoom_speed
+    return frames
+
+# Function to play the generated frames
+def play_frames(frames, panel):
+    def update_frame(frame_idx):
+        if frame_idx < len(frames):
+            img = frames[frame_idx]
+            img_tk = ImageTk.PhotoImage(img)
+            panel.config(image=img_tk)
+            panel.image = img_tk
+            root.after(17, lambda: update_frame(frame_idx + 1))  # 17 ms for ~60 fps
+
+    update_frame(0)
+
+# Function to start generating and playing fractal video
+def start_fractal_video():
+    fractal_type = fractal_type_var.get()
+    order = order_var.get()
+    duration = duration_var.get()
+    try:
+        # Run frame generation in a separate thread to avoid freezing the UI
+        thread = threading.Thread(target=lambda: play_frames(generate_frames(fractal_type, order, duration), panel))
+        thread.start()
     except Exception as e:
         messagebox.showerror("Error", str(e))
-    root.after(17, lambda: update_fractal(zoom_factor * 1.01))  # Continuously update with zoom (17 ms for ~60fps)
 
 # Function to save the fractal as an image
 def save_image():
@@ -118,14 +140,7 @@ def save_gif():
     max_order = order_var.get()
     duration = duration_var.get()
     try:
-        frames = []
-        zoom_factor = 1.0
-        for _ in range(60 * duration):  # 60 frames per second * duration
-            buf = draw_fractal(fractal_type, max_order, zoom_factor)
-            img = Image.open(buf)
-            frames.append(img)
-            zoom_factor *= 1.01
-        
+        frames = generate_frames(fractal_type, max_order, duration)
         filename = simpledialog.askstring("Save As", "Enter the file name to save (e.g., fractal.gif):")
         if filename:
             frames[0].save(filename, save_all=True, append_images=frames[1:], duration=17, loop=0)
@@ -168,7 +183,7 @@ duration_scale = ttk.Scale(control_frame, from_=1, to=10, variable=duration_var,
 duration_scale.pack()
 
 # Buttons
-draw_button = ttk.Button(control_frame, text="Draw Fractal", command=lambda: update_fractal(1.0))
+draw_button = ttk.Button(control_frame, text="Draw Fractal", command=start_fractal_video)
 draw_button.pack()
 
 save_button = ttk.Button(control_frame, text="Save Fractal", command=save_image)
@@ -177,15 +192,12 @@ save_button.pack()
 save_gif_button = ttk.Button(control_frame, text="Save Fractal as GIF", command=save_gif)
 save_gif_button.pack()
 
-# Create panel for displaying the fractal image
-panel = ttk.Label(canvas, background='black')
+# Panel to display fractal
+panel = ttk.Label(canvas)
 panel.pack()
 
-# Center the window on the screen
-root.update()
-center_window(root, width=1200, height=800)
+# Center the window
+center_window(root)
 
-# Start continuous update of the fractal with zoom effect
-update_fractal()
-
+# Start the main loop
 root.mainloop()
