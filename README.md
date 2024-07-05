@@ -1,18 +1,36 @@
 # Abstract-Fractals-Generator
-This repository includes fractals generator which can be saved as the picture or GIF.
+This repository includes a versatile fractal generator that allows you to create and save stunning fractal images.
 
-The user can generate:
-* Nova Fractals,
-* Phoenix Fractals,
-* Multibrot Set,
-* Mandelbrot Set,
-* ...and many more in the future c:
+## Available Fractals
+* Mandelbrot Set
+* Julia Set
+* Burning Ship Fractal
+* Tricorn Fractal
+* Newton Fractal
+* Multibrot Set
+* Mandelbar Set
+* Perpendicular variations of Mandelbrot, Burning Ship, and Buffalo
+* Celtic variations of Mandelbrot and Mandelbar
+
+## Features
+* Interactive Controls: Easily adjust parameters such as maximum iterations, colormaps, and zoom levels to fine-tune your fractal visualizations.
+* Customizable Equations (In Development): The project aims to incorporate SymPy for defining custom fractal equations in future updates.
+* Interactive Zoom: Double-click on the fractal to dynamically zoom in and explore specific regions of interest.
+* Save as Image: Export your generated fractals as PNG images for sharing or further use.
+* Modern UI: The application features a sleek dark theme built with Tkinter and ttkbootstrap for a visually appealing experience.
 
 ## Instalation
-You need to install numpy, pillow  and matplotlib for it to work:
+* Clone the repository: 
 ```
-pip install numpy pillow matplotlib
-
+git clone 
 ```
 
-**In progress**
+* Install dependencies: 
+```
+pip install tkinter matplotlib numpy ttkbootstrap sympy
+```
+
+* Run the app: 
+```
+python fractal_generator.py
+```

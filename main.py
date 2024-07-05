@@ -260,19 +260,15 @@ class FractalApp:
     def save_plot(self):
         file_path = filedialog.asksaveasfilename(defaultextension=".png")
         if file_path:
-            # Save the current state of the plot
             original_xlim = self.ax.get_xlim()
             original_ylim = self.ax.get_ylim()
             original_title = self.ax.get_title()
 
-            # Clear the plot decorations
             self.ax.set_title("")
             self.ax.axis('off')
 
-            # Save the figure
             self.fig.savefig(file_path, bbox_inches='tight', pad_inches=0)
 
-            # Restore the plot decorations
             self.ax.set_title(original_title)
             self.ax.axis('on')
             self.ax.set_xlim(original_xlim)
