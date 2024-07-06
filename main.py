@@ -22,7 +22,7 @@ class FractalApp:
         self.ymax = tk.DoubleVar(value=1.5)
         self.width = tk.IntVar(value=800)
         self.height = tk.IntVar(value=600)
-        self.colormap = tk.StringVar(value="hot")
+        self.colormap = tk.StringVar(value="Blues")
 
         self.custom_eq = tk.StringVar(value="z**2 + c")
         self.custom_c_real = tk.DoubleVar(value=-0.7)
