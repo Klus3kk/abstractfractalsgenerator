@@ -1,4 +1,4 @@
-# Abstract-Fractals-Generator
+# Abstract Fractals Generator
 This repository includes a versatile fractal generator that allows you to create and save stunning fractal images.
 
 ## Available Fractals
